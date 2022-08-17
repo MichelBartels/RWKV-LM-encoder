@@ -372,7 +372,7 @@ class Encoder(nn.Module):
             else:
                 mask = torch.rand_like(idx, dtype=torch.half) < 0.15
                 old_idx = idx
-                idx = (1 - mask) * idx + mask * 0 # TODO: Find mask token index
+                idx = torch.logical_not(mask) * idx + mask * 0 # TODO: Find mask token index
 
         idx = idx.to(self.emb.weight.device)
 
@@ -407,9 +407,9 @@ class Encoder(nn.Module):
             if self.mlm:
                 loss += F.binary_cross_entropy_with_logits(x, mask.to(x.device))
             else:
-                targets = old_idx * mask + (1 - mask) * -100
+                targets = old_idx * mask + torch.logical_not(mask) * -100
                 loss = F.cross_entropy(x.view(-1, x.size(-1)), targets.to(x.device).view(-1))
                 mask = mask.to(x.device)
-                return idx.to(x.device) * (1 - mask) + mask * torch.argmax(x, -1), mask, loss
+                return idx.to(x.device) * torch.logical_not(mask) + mask * torch.argmax(x, -1), mask, loss
 
         return x, loss
