@@ -22,7 +22,7 @@ class Dataset(Dataset):
         self.data = data
 
         if 'MMapIndexedDataset' in str(type(self.data)):
-            self.vocab_size = 253 # your vocab_size
+            self.vocab_size = 50304 # your vocab_size
             print('current vocab size = ', self.vocab_size, "(make sure it's correct)")
             self.data_size = len(self.data._bin_buffer) // 2
             self.item_cnt = len(self.data)            
