@@ -408,7 +408,7 @@ class Encoder(nn.Module):
 
         if targets is not None:
             if self.mlm:
-                loss += F.binary_cross_entropy_with_logits(x.squeeze(-1), mask.to(x.device))
+                loss += F.binary_cross_entropy_with_logits(x.squeeze(-1), mask.to(x.device).half())
             else:
                 targets = old_idx * mask + torch.logical_not(mask) * -100
                 loss = F.cross_entropy(x.view(-1, x.size(-1)), targets.to(x.device).view(-1))
