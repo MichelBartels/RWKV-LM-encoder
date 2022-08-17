@@ -310,10 +310,12 @@ class Encoder(nn.Module):
                                     for i in range(config.n_layer)])
 
         self.ln_out = nn.LayerNorm(config.n_embd)
+        self.cls_token = config.vocab_size
+        self.mask_token = config.vocab_size + 1
         if mlm:
             self.mlm = None
             self.head = nn.Linear(config.n_embd, config.vocab_size, bias=False)
-            self.emb = nn.Embedding(config.vocab_size, config.n_embd)
+            self.emb = nn.Embedding(config.vocab_size + 2, config.n_embd)
         else:
             self.mlm = Encoder(config=config.mlm, mlm=True)
             self.emb = self.mlm.emb
@@ -373,9 +375,11 @@ class Encoder(nn.Module):
             if self.mlm:
                 idx, mask, loss = self.mlm(idx, targets)
             else:
+                idx[..., 1:] = idx[..., :-1].copy()
+                idx[..., 0] = self.cls_token
                 mask = torch.rand_like(idx, dtype=torch.half) < 0.15
                 old_idx = idx
-                idx = torch.logical_not(mask) * idx + mask * 0 # TODO: Find mask token index
+                idx = torch.logical_not(mask) * idx + mask * self.mask_token
 
         idx = idx.to(self.emb.weight.device)
 
