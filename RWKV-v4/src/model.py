@@ -375,7 +375,7 @@ class Encoder(nn.Module):
             if self.mlm:
                 idx, mask, loss = self.mlm(idx, targets)
             else:
-                idx[..., 1:] = idx[..., :-1].copy()
+                idx[..., 1:] = idx[..., :-1].clone()
                 idx[..., 0] = self.cls_token
                 mask = torch.rand_like(idx, dtype=torch.half) < 0.15
                 mask[..., 0] = False
