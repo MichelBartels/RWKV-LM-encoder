@@ -49,7 +49,7 @@ torch.backends.cuda.matmul.allow_tf32 = True
 #datafile = "../data/enwik8" # your data
 #datafile_encoding = 'utf-8' # 'utf-8' 'utf-16le' 'binidx'
 
-datafile = 'train-dataset'
+datafile = '../../train-dataset'
 datafile_encoding = 'binidx'
 
 ### Step 2: set model size #############################################################################
