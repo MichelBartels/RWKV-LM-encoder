@@ -35,7 +35,7 @@ class TrainerConfig:
         for k, v in kwargs.items():
             setattr(self, k, v)
 
-from src.model import Encoder, GPTConfig
+from src.model import Encoder, EncoderConfig
 
 class Trainer(LightningLite):
 
@@ -50,8 +50,8 @@ class Trainer(LightningLite):
     def run(self, m_cfg, train_dataset, test_dataset, config):
         self.cuda_id = int(str(self.device).strip('cuda:'))
         print('[0]')
-        model = GPT(GPTConfig(train_dataset.vocab_size, train_dataset.ctx_len, model_type=m_cfg.model_type,
-                        n_layer=m_cfg.n_layer, n_embd=m_cfg.n_embd, mlm=GPTConfig(train_dataset.vocab_size,
+        model = Encoder(EncoderConfig(train_dataset.vocab_size, train_dataset.ctx_len, model_type=m_cfg.model_type,
+                        n_layer=m_cfg.n_layer, n_embd=m_cfg.n_embd, mlm=EncoderConfig(train_dataset.vocab_size,
                             train_dataset.ctx_len, model_type=m_cfg.model_type, n_layer=m_cfg.n_mlm_layer,
                             n_embd=m_cfg.n_embd)))
         print('[1]')
