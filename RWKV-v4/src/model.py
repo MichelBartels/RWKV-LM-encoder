@@ -40,7 +40,7 @@ if os.environ['RWKV_FLOAT_MODE'] == 'fp16':
             k = k.float().contiguous()
             v = v.float().contiguous()
             ctx.save_for_backward(w, u, k, v)
-            y = torch.zeros((B, T, C), device='cuda', memory_format=torch.contiguous_format)
+            y = torch.empty((B, T, C), device='cuda', memory_format=torch.contiguous_format)
             wkv_cuda.forward(B, T, C, w, u, k, v, y)
             return y.half()
 
@@ -207,15 +207,8 @@ class RWKV_TimeMix(nn.Module):
         k = self.key(xk)
         v = self.value(xv)
         r = self.receptance(xr)
-        print(r.shape)
-        print(k.shape)
-        print(v.shape)
 
-        torch.set_printoptions(profile="full")
-        print(RUN_CUDA(B, T, C, self.time_decay, self.time_first, k, v)[0, 0])
-        print(RUN_CUDA(B, T, C, self.time_decay, self.time_first, k, v).shape)
-        torch.set_printoptions(profile="default")
-        rwkv = torch.sigmoid(r) * RUN_CUDA(B, T, C, self.time_decay, self.time_first, k, v)
+        rwkv = torch.sigmoid(r) * RUN_CUDA(B, T, C // 2, self.time_decay, self.time_first, k, v)
         rwkv = self.output(rwkv)
         return rwkv
 
