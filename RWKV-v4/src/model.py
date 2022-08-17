@@ -213,6 +213,7 @@ class RWKV_TimeMix(nn.Module):
 
         torch.set_printoptions(profile="full")
         print(RUN_CUDA(B, T, C, self.time_decay, self.time_first, k, v)[0, 0])
+        print(RUN_CUDA(B, T, C, self.time_decay, self.time_first, k, v).shape)
         torch.set_printoptions(profile="default")
         rwkv = torch.sigmoid(r) * RUN_CUDA(B, T, C, self.time_decay, self.time_first, k, v)
         rwkv = self.output(rwkv)
