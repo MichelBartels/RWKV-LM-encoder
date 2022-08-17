@@ -155,7 +155,7 @@ class RWKV_TimeMix(nn.Module):
         super().__init__()
         self.layer_id = layer_id
         self.ctx_len = config.ctx_len
-        self.n_embd = config.n_embd
+        self.n_embd = config.n_embd / 2
 
         attn_sz = config.n_embd
 
@@ -251,11 +251,11 @@ class RWKV_ChannelMix(nn.Module):
         return rkv
 
 ########################################################################################################
-# The GPT Model with our blocks
+# The Encoder Model with our blocks
 ########################################################################################################
 
 
-class GPTConfig:
+class EncoderConfig:
     def __init__(self, vocab_size, ctx_len, **kwargs):
         self.vocab_size = vocab_size
         self.ctx_len = ctx_len
@@ -276,9 +276,11 @@ class Block(nn.Module):
             self.ln0 = nn.LayerNorm(config.n_embd)
 
         if self.layer_id == 0 and self.config.model_type == 'RWKV-ffnPre':
-            self.ffnPre = RWKV_ChannelMix(config, layer_id+1000)
+            self.ffnPre_forward = RWKV_ChannelMix(config, layer_id+1000)
+            self.ffnPre_backward = RWKV_ChannelMix(config, layer_id+1000)
         else:
-            self.att = RWKV_TimeMix(config, layer_id)
+            self.att_forward = RWKV_TimeMix(config, layer_id)
+            self.att_backward = RWKV_TimeMix(config, layer_id)
 
         self.ffn = RWKV_ChannelMix(config, layer_id)
 
@@ -286,28 +288,35 @@ class Block(nn.Module):
         if self.layer_id == 0:
             x = self.ln0(x)        
         if self.layer_id == 0 and self.config.model_type == 'RWKV-ffnPre':
-            x = x + self.ffnPre(self.ln1(x))  # better in some cases
+            normalized = self.ln1(x)
+            x = x + torch.cat([self.ffnPre_forward(normalized), self.ffnPre_backward[..., ::-1]], -1)  # better in some cases
         else:
-            x = x + self.att(self.ln1(x))
+            normalized = self.ln1(x)
+            x = x + torch.cat([self.att_forward(normalized), self.att_backward[..., ::-1]], -1)  # better in some cases
         x = x + self.ffn(self.ln2(x))
         return x
 
 
-class GPT(nn.Module):
-    def __init__(self, config):
+class Encoder(nn.Module):
+    def __init__(self, config, mlm = False):
         super().__init__()
         self.step = 0
         self.config = config
-
-        self.emb = nn.Embedding(config.vocab_size, config.n_embd)
 
         self.blocks = nn.Sequential(*[Block(config, i)
                                     for i in range(config.n_layer)])
 
         self.ln_out = nn.LayerNorm(config.n_embd)
-        self.head = nn.Linear(config.n_embd, config.vocab_size, bias=False)
+        if mlm:
+            self.mlm = None
+            self.head = nn.Linear(config.n_embd, config.vocab_size, bias=False)
+            self.emb = nn.Embedding(config.vocab_size, config.n_embd)
+        else:
+            self.mlm = Encoder(config=config.mlm, mlm=True)
+            self.emb = self.mlm.emb
+            self.head = nn.Linear(config.n_embd, 1, bias=False)
 
-        if RWKV_HEAD_QK_DIM > 0:
+        if RWKV_HEAD_QK_DIM > 0 and mlm is None:
             self.head_q = nn.Linear(config.n_embd, RWKV_HEAD_QK_DIM, bias=False)
             self.head_q.scale_init = 0
             self.head_k = nn.Linear(config.n_embd, RWKV_HEAD_QK_DIM, bias=False)
@@ -356,13 +365,26 @@ class GPT(nn.Module):
         return optimizer
 
     def forward(self, idx, targets=None):
+        loss = None
+        if targets:
+            if self.mlm:
+                idx, mask, loss = self.mlm(idx, targets)
+            else:
+                mask = torch.rand_like(idx) < 0.15
+                old_idx = idx
+                idx = (1 - mask) * idx + mask * 0 # TODO: Find mask token index
+
         idx = idx.to(self.emb.weight.device)
 
         self.step += 1
         B, T = idx.size()
         assert T <= self.ctx_len, "Cannot forward, because len(input) > model ctx_len."
 
-        x = self.emb(idx)
+        if self.mlm:
+            with torch.no_grad():
+                x = self.emb(idx)
+        else:
+            x = self.emb(idx)
         x = self.blocks(x)
         x = self.ln_out(x)
 
@@ -381,8 +403,13 @@ class GPT(nn.Module):
         else:
             x = self.head(x)
 
-        loss = None
         if targets is not None:
-            loss = F.cross_entropy(x.view(-1, x.size(-1)), targets.to(x.device).view(-1))
+            if self.mlm:
+                loss += F.binary_cross_entropy_with_logits(x, mask.to(x.device))
+            else:
+                targets = old_idx * mask + (1 - mask) * -100
+                loss = F.cross_entropy(x.view(-1, x.size(-1)), targets.to(x.device).view(-1))
+                mask = mask.to(x.device)
+                return idx.to(x.device) * (1 - mask) + mask * torch.argmax(x, -1), mask, loss
 
         return x, loss

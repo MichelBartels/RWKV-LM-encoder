@@ -58,6 +58,9 @@ ctx_len = 1024 # increase T_MAX in model.py if your ctx_len is very long
 n_layer = 6
 n_embd = 512
 
+n_layer_encoder = 3
+n_embd_encoder = 512
+
 # 'RWKV' or 'RWKV-ffnPre' (better in some cases)
 model_type = 'RWKV'
 
@@ -137,6 +140,10 @@ if __name__ == '__main__':
     m_cfg.EPOCH_BEGIN = EPOCH_BEGIN
     m_cfg.LOAD_MODEL = LOAD_MODEL
     m_cfg.MODEL_NAME = MODEL_NAME
+    from copy import copy
+    m_cfg.mlm = copy(m_cfg)
+    m_cfg.n_layer = n_layer_encoder
+    m_cfg.n_embd = n_embd_encoder
 
     from pytorch_lightning.strategies import DeepSpeedStrategy
     
