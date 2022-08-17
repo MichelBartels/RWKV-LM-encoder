@@ -207,6 +207,9 @@ class RWKV_TimeMix(nn.Module):
         k = self.key(xk)
         v = self.value(xv)
         r = self.receptance(xr)
+        print(r.shape)
+        print(k.shape)
+        print(v.shape)
 
         rwkv = torch.sigmoid(r) * RUN_CUDA(B, T, C, self.time_decay, self.time_first, k, v)
         rwkv = self.output(rwkv)
