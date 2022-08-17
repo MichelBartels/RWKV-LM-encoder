@@ -378,6 +378,7 @@ class Encoder(nn.Module):
                 idx[..., 1:] = idx[..., :-1].copy()
                 idx[..., 0] = self.cls_token
                 mask = torch.rand_like(idx, dtype=torch.half) < 0.15
+                mask[..., 0] = False
                 old_idx = idx
                 idx = torch.logical_not(mask) * idx + mask * self.mask_token
 
