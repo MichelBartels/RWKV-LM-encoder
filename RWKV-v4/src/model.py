@@ -184,9 +184,9 @@ class RWKV_TimeMix(nn.Module):
             
         self.time_shift = nn.ZeroPad2d((0, 0, 1, -1))
 
-        self.key = nn.Linear(self.n_embd, attn_sz, bias=False)
-        self.value = nn.Linear(self.n_embd, attn_sz, bias=False)
-        self.receptance = nn.Linear(self.n_embd, attn_sz, bias=False)
+        self.key = nn.Linear(config.n_embd, attn_sz, bias=False)
+        self.value = nn.Linear(config.n_embd, attn_sz, bias=False)
+        self.receptance = nn.Linear(config.n_embd, attn_sz, bias=False)
 
         self.output = nn.Linear(attn_sz, self.n_embd, bias=False)
 
