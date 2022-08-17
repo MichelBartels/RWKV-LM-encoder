@@ -283,7 +283,7 @@ class Block(nn.Module):
             self.att_forward = RWKV_TimeMix(config, layer_id)
             self.att_backward = RWKV_TimeMix(config, layer_id)
 
-        self.ffn_forwad = RWKV_ChannelMix(config, layer_id)
+        self.ffn_forward = RWKV_ChannelMix(config, layer_id)
         self.ffn_backward = RWKV_ChannelMix(config, layer_id)
 
     def forward(self, x):
