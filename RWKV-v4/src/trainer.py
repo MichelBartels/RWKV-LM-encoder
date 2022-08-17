@@ -52,8 +52,8 @@ class Trainer(LightningLite):
         print('[0]')
         model = Encoder(EncoderConfig(train_dataset.vocab_size, train_dataset.ctx_len, model_type=m_cfg.model_type,
                         n_layer=m_cfg.n_layer, n_embd=m_cfg.n_embd, mlm=EncoderConfig(train_dataset.vocab_size,
-                            train_dataset.ctx_len, model_type=m_cfg.model_type, n_layer=m_cfg.n_mlm_layer,
-                            n_embd=m_cfg.n_embd)))
+                            train_dataset.ctx_len, model_type=m_cfg.model_type, n_layer=m_cfg.mlm.n_layer,
+                            n_embd=m_cfg.mlm.n_embd)))
         print('[1]')
         model.to(self.device)
         print('[2]')
