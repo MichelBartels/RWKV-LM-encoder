@@ -155,7 +155,7 @@ class RWKV_TimeMix(nn.Module):
         super().__init__()
         self.layer_id = layer_id
         self.ctx_len = config.ctx_len
-        self.n_embd = config.n_embd / 2
+        self.n_embd = config.n_embd // 2
 
         attn_sz = self.n_embd
 
@@ -219,7 +219,7 @@ class RWKV_ChannelMix(nn.Module):
         self.layer_id = layer_id
 
         self.time_shift = nn.ZeroPad2d((0, 0, 1, -1))
-        self.n_embd = config.n_embd / 2
+        self.n_embd = config.n_embd // 2
 
         with torch.no_grad(): # fancy init of time_mix
             ratio_1_to_almost0 = (1.0 - (layer_id / config.n_layer)) # 1 to ~0
