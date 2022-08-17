@@ -157,7 +157,7 @@ class RWKV_TimeMix(nn.Module):
         self.ctx_len = config.ctx_len
         self.n_embd = config.n_embd / 2
 
-        attn_sz = config.n_embd
+        attn_sz = self.n_embd
 
         with torch.no_grad(): # fancy init
             ratio_0_to_1 = (layer_id / (config.n_layer - 1)) # 0 to 1
@@ -175,20 +175,20 @@ class RWKV_TimeMix(nn.Module):
             self.time_first = nn.Parameter(torch.ones(attn_sz) * math.log(0.3) + zigzag)
             
             # fancy time_mix
-            x = torch.ones(1, 1, config.n_embd)
-            for i in range(config.n_embd):
-                x[0, 0, i] = i / config.n_embd
+            x = torch.ones(1, 1, self.n_embd)
+            for i in range(self.n_embd):
+                x[0, 0, i] = i / self.n_embd
             self.time_mix_k = nn.Parameter(torch.pow(x, ratio_1_to_almost0))
             self.time_mix_v = nn.Parameter(torch.pow(x, ratio_1_to_almost0) + 0.3 * ratio_0_to_1)
             self.time_mix_r = nn.Parameter(torch.pow(x, 0.5 * ratio_1_to_almost0))
             
         self.time_shift = nn.ZeroPad2d((0, 0, 1, -1))
 
-        self.key = nn.Linear(config.n_embd, attn_sz, bias=False)
-        self.value = nn.Linear(config.n_embd, attn_sz, bias=False)
-        self.receptance = nn.Linear(config.n_embd, attn_sz, bias=False)
+        self.key = nn.Linear(self.n_embd, attn_sz, bias=False)
+        self.value = nn.Linear(self.n_embd, attn_sz, bias=False)
+        self.receptance = nn.Linear(self.n_embd, attn_sz, bias=False)
 
-        self.output = nn.Linear(attn_sz, config.n_embd, bias=False)
+        self.output = nn.Linear(attn_sz, self.n_embd, bias=False)
 
         self.key.scale_init = 0
         self.receptance.scale_init = 0
@@ -219,21 +219,22 @@ class RWKV_ChannelMix(nn.Module):
         self.layer_id = layer_id
 
         self.time_shift = nn.ZeroPad2d((0, 0, 1, -1))
+        self.n_embd = config.n_embd / 2
 
         with torch.no_grad(): # fancy init of time_mix
             ratio_1_to_almost0 = (1.0 - (layer_id / config.n_layer)) # 1 to ~0
 
-            x = torch.ones(1, 1, config.n_embd)
-            for i in range(config.n_embd):
-                x[0, 0, i] = i / config.n_embd
+            x = torch.ones(1, 1, self.n_embd)
+            for i in range(self.n_embd):
+                x[0, 0, i] = i / self.n_embd
 
             self.time_mix_k = nn.Parameter(torch.pow(x, ratio_1_to_almost0))
             self.time_mix_r = nn.Parameter(torch.pow(x, ratio_1_to_almost0))
 
-        hidden_sz = 4 * config.n_embd
-        self.key = nn.Linear(config.n_embd, hidden_sz, bias=False)
-        self.receptance = nn.Linear(config.n_embd, config.n_embd, bias=False)
-        self.value = nn.Linear(hidden_sz, config.n_embd, bias=False)
+        hidden_sz = 4 * self.n_embd
+        self.key = nn.Linear(self.n_embd, hidden_sz, bias=False)
+        self.receptance = nn.Linear(self.n_embd, self.n_embd, bias=False)
+        self.value = nn.Linear(hidden_sz, self.n_embd, bias=False)
 
         self.value.scale_init = 0
         self.receptance.scale_init = 0
