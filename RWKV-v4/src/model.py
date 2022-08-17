@@ -366,7 +366,7 @@ class Encoder(nn.Module):
 
     def forward(self, idx, targets=None):
         loss = None
-        if targets:
+        if targets is not None:
             if self.mlm:
                 idx, mask, loss = self.mlm(idx, targets)
             else:
