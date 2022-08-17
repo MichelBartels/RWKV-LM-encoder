@@ -283,7 +283,8 @@ class Block(nn.Module):
             self.att_forward = RWKV_TimeMix(config, layer_id)
             self.att_backward = RWKV_TimeMix(config, layer_id)
 
-        self.ffn = RWKV_ChannelMix(config, layer_id)
+        self.ffn_forwad = RWKV_ChannelMix(config, layer_id)
+        self.ffn_backward = RWKV_ChannelMix(config, layer_id)
 
     def forward(self, x):
         if self.layer_id == 0:
@@ -294,7 +295,8 @@ class Block(nn.Module):
         else:
             normalized = self.ln1(x)
             x = x + torch.cat([self.att_forward(normalized), self.att_backward(torch.flip(normalized, [-1]))], -1)  # better in some cases
-        x = x + self.ffn(self.ln2(x))
+        normalized = self.ln2(x)
+        x = x + torch.cat([self.ffn_forward(normalized), self.ffn_backward(torch.flip(normalized, [-1]))], -1)
         return x
 
 
