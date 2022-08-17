@@ -370,7 +370,7 @@ class Encoder(nn.Module):
             if self.mlm:
                 idx, mask, loss = self.mlm(idx, targets)
             else:
-                mask = torch.rand_like(idx) < 0.15
+                mask = torch.rand_like(idx, dtype=torch.half) < 0.15
                 old_idx = idx
                 idx = (1 - mask) * idx + mask * 0 # TODO: Find mask token index
 
