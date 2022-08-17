@@ -289,10 +289,10 @@ class Block(nn.Module):
             x = self.ln0(x)        
         if self.layer_id == 0 and self.config.model_type == 'RWKV-ffnPre':
             normalized = self.ln1(x)
-            x = x + torch.cat([self.ffnPre_forward(normalized), self.ffnPre_backward[..., ::-1]], -1)  # better in some cases
+            x = x + torch.cat([self.ffnPre_forward(normalized), self.ffnPre_backward(normalized[..., ::-1])], -1)  # better in some cases
         else:
             normalized = self.ln1(x)
-            x = x + torch.cat([self.att_forward(normalized), self.att_backward[..., ::-1]], -1)  # better in some cases
+            x = x + torch.cat([self.att_forward(normalized), self.att_backward(normalized[..., ::-1])], -1)  # better in some cases
         x = x + self.ffn(self.ln2(x))
         return x
 
