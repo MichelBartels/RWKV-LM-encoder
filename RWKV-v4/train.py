@@ -46,11 +46,11 @@ torch.backends.cuda.matmul.allow_tf32 = True
 
 ### Step 1: set training data ##########################################################################
 
-datafile = "../data/enwik8" # your data
-datafile_encoding = 'utf-8' # 'utf-8' 'utf-16le' 'binidx'
+#datafile = "../data/enwik8" # your data
+#datafile_encoding = 'utf-8' # 'utf-8' 'utf-16le' 'binidx'
 
-# datafile = './my-gpt_seq_document'
-# datafile_encoding = 'binidx'
+datafile = '../../training-data'
+datafile_encoding = 'binidx'
 
 ### Step 2: set model size #############################################################################
 
