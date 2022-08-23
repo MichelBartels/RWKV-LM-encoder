@@ -191,8 +191,8 @@ if __name__ == '__main__':
     m_cfg.MODEL_NAME = MODEL_NAME
     from copy import copy
     m_cfg.mlm = copy(m_cfg)
-    m_cfg.n_layer = n_layer_encoder
-    m_cfg.n_embd = n_embd_encoder
+    m_cfg.mlm.n_layer = n_layer_encoder
+    m_cfg.mlm.n_embd = n_embd_encoder
 
     from pytorch_lightning.strategies import DeepSpeedStrategy
     
