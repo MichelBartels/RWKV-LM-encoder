@@ -353,7 +353,7 @@ class Encoder(nn.Module):
 
         return optimizer
 
-    def forward(self, idx, targets=None):
+    def forward(self, idx, targets=None, return_embedding=False):
         loss = None
         if targets is not None:
             if self.mlm:
@@ -380,22 +380,23 @@ class Encoder(nn.Module):
         x = self.blocks(x)
         x = self.ln_out(x)
 
-        if RWKV_HEAD_QK_DIM > 0:
-            q = self.head_q(x)[:, :T, :]
-            k = self.head_k(x)[:, :T, :]
-            c = (q @ k.transpose(-2, -1)) * (1.0 / RWKV_HEAD_QK_DIM)
-            c = c.masked_fill(self.copy_mask[:T, :T] == 0, 0)
-            
-            if os.environ['RWKV_FLOAT_MODE'] == 'fp16':
-                c = c @ F.one_hot(idx, num_classes=self.config.vocab_size).half()
-            elif os.environ['RWKV_FLOAT_MODE'] == 'bf16':
-                c = c @ F.one_hot(idx, num_classes=self.config.vocab_size).bfloat16()
-            elif os.environ['RWKV_FLOAT_MODE'] == 'fp32':
-                c = c @ F.one_hot(idx, num_classes=self.config.vocab_size)
+        if not return_embedding:
+          if RWKV_HEAD_QK_DIM > 0:
+              q = self.head_q(x)[:, :T, :]
+              k = self.head_k(x)[:, :T, :]
+              c = (q @ k.transpose(-2, -1)) * (1.0 / RWKV_HEAD_QK_DIM)
+              c = c.masked_fill(self.copy_mask[:T, :T] == 0, 0)
 
-            x = self.head(x) + c
-        else:
-            x = self.head(x)
+              if os.environ['RWKV_FLOAT_MODE'] == 'fp16':
+                  c = c @ F.one_hot(idx, num_classes=self.config.vocab_size).half()
+              elif os.environ['RWKV_FLOAT_MODE'] == 'bf16':
+                  c = c @ F.one_hot(idx, num_classes=self.config.vocab_size).bfloat16()
+              elif os.environ['RWKV_FLOAT_MODE'] == 'fp32':
+                  c = c @ F.one_hot(idx, num_classes=self.config.vocab_size)
+
+              x = self.head(x) + c
+          else:
+              x = self.head(x)
 
         if targets is not None:
             if self.mlm:
