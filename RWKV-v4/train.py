@@ -126,7 +126,7 @@ n_epoch = 20
 epoch_length_fixed = (10000 // batch_size) * batch_size # feel free to increase it if you have lots of GPU
 
 # epoch_save_frequency 0 = never, 1 = every mini-epoch, 2 = every two mini-epochs, ...
-epoch_save_frequency = 10
+epoch_save_frequency = 1
 epoch_save_path = 'trained-'
 
 if EXPRESS_PILE_MODE:
